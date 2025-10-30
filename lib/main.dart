@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 
 import 'components/triangle.form.dart';
+import 'components/resultCard/triangle.result.card.dart';
 
 void main() {
   runApp(const MyApp());
@@ -32,12 +33,39 @@ class _MyHomePageState extends State<MyHomePage> {
   num _sideB = 0;
   num _sideC = 0;
 
-  void setSides(num a, num b, num c) {
+  Future<void> setSides(num a, num b, num c) async {
     setState(() {
       _sideA = a;
       _sideB = b;
       _sideC = c;
     });
+
+    // Classify, then open the correct UI.
+    final res = TriangleClassifier.classify(a, b, c);
+    if (res.type == TriangleType.invalid ||
+        res.type == TriangleType.degenerate) {
+      // Show a quick Cupertino alert for non-valid
+      // (You asked to show the card if it's a valid triangle.)
+      // If you want to always show the card, remove this block.
+      await showCupertinoDialog(
+        context: context,
+        builder: (_) => CupertinoAlertDialog(
+          title: Text(res.title),
+          content: Text(res.definition),
+          actions: [
+            CupertinoDialogAction(
+              isDefaultAction: true,
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    // Valid triangle → show the hover card.
+    await showTriangleResultModal(context, a: a, b: b, c: c);
   }
 
   @override
